@@ -19,3 +19,4 @@ plotly==5.18.0
 
 # Utilities
 python-dateutil==2.8.2
+Fix: Add complete requirements.txt with dependencies
