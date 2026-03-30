@@ -1,0 +1,19 @@
+# FPTPlay Churn Prediction - Python Dependencies
+# ==============================================
+# Requirements file for Streamlit web application
+
+# Core libraries
+streamlit>=1.28.0
+pandas>=1.5.0
+numpy>=1.23.0
+
+# Machine Learning
+scikit-learn>=1.3.0
+xgboost>=2.0.0
+joblib>=1.3.0
+
+# Visualization
+plotly>=5.17.0
+
+# Utilities
+python-dateutil>=2.8.2
