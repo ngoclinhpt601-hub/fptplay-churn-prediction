@@ -177,12 +177,99 @@ def load_model():
     Returns:
         model_info: Dictionary chứa model, features, scaler, metadata
     """
-    try:
-        model_path = '/Workspace/Users/ngoclinhpt601@gmail.com/Mini_project (1)/models/best_model_random_forest.pkl'
-        model_info = joblib.load(model_path)
+    import os
+    
+    # Thử các đường dẫn theo thứ tự ưu tiên
+    # Ưu tiên relative paths cho Streamlit Cloud
+    possible_paths = [
+        # 1. Relative to app.py (BEST for Streamlit Cloud)
+        'models/best_model_random_forest.pkl',
+        './models/best_model_random_forest.pkl',
+        os.path.join(os.path.dirname(__file__), 'models', 'best_model_random_forest.pkl'),
+        
+        # 2. Current directory
+        os.path.join(os.getcwd(), 'models', 'best_model_random_forest.pkl'),
+        
+        # 3. Parent directory (nếu app.py trong subfolder)
+        os.path.join(os.path.dirname(__file__), '..', 'models', 'best_model_random_forest.pkl'),
+        
+        # 4. Databricks paths (chỉ cho Databricks environment)
+        '/Workspace/Users/ngoclinhpt601@gmail.com/Mini_project (1)/models/best_model_random_forest.pkl',
+        '/dbfs/Workspace/Users/ngoclinhpt601@gmail.com/Mini_project (1)/models/best_model_random_forest.pkl',
+    ]
+    
+    model_info = None
+    successful_path = None
+    errors = []
+    
+    for model_path in possible_paths:
+        try:
+            # Check if file exists first
+            if os.path.exists(model_path):
+                # Try to load
+                model_info = joblib.load(model_path)
+                successful_path = model_path
+                break
+            else:
+                errors.append(f"Path not found: {model_path}")
+        except Exception as e:
+            errors.append(f"Error with {model_path}: {str(e)}")
+            continue
+    
+    if model_info is not None:
+        # Success!
         return model_info
-    except Exception as e:
-        st.error(f"❌ Lỗi khi load model: {str(e)}")
+    else:
+        # Failed to load - show helpful error
+        st.error("❌ Không thể load model file!")
+        
+        with st.expander("🔍 Chi Tiết Lỗi (Debug Info)", expanded=True):
+            st.write("**📁 Đường dẫn đã thử:**")
+            for i, path in enumerate(possible_paths[:5], 1):  # Show first 5 paths
+                exists = "✅" if os.path.exists(path) else "❌"
+                st.code(f"{i}. {exists} {path}")
+            
+            st.write("\n**📂 Thư mục hiện tại:**")
+            st.code(os.getcwd())
+            
+            st.write("\n**📄 __file__ location:**")
+            try:
+                st.code(os.path.abspath(__file__))
+                st.code(f"Directory: {os.path.dirname(os.path.abspath(__file__))}")
+            except:
+                st.code("Unable to determine __file__")
+            
+            st.write("\n**📋 Files trong thư mục hiện tại:**")
+            try:
+                files = os.listdir(os.getcwd())
+                st.write(files[:20])  # Show first 20 files
+            except Exception as e:
+                st.write(f"Error: {e}")
+            
+            st.write("\n**📦 Kiểm tra thư mục 'models':**")
+            models_dir = 'models'
+            if os.path.exists(models_dir):
+                st.success("✅ Thư mục 'models' tồn tại!")
+                try:
+                    model_files = os.listdir(models_dir)
+                    st.write("Files trong models/:")
+                    for f in model_files:
+                        st.write(f"  • {f}")
+                except:
+                    st.error("Không thể list files trong models/")
+            else:
+                st.error("❌ Thư mục 'models' KHÔNG tồn tại!")
+                st.warning("**Giải pháp:**")
+                st.write("1. Đảm bảo thư mục 'models/' đã được upload lên GitHub")
+                st.write("2. Đảm bảo file 'best_model_random_forest.pkl' có trong 'models/'")
+                st.write("3. Check cấu trúc repo:")
+                st.code("""
+├── app.py
+├── requirements.txt
+└── models/
+    └── best_model_random_forest.pkl
+                """)
+        
         return None
 
 # ============================================================================
